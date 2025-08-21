@@ -23,7 +23,7 @@ export const registerValidation = [
   body('username').notEmpty().withMessage('Username is required'),
   body('email').isEmail().withMessage('Email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-  body('phone').isMobilePhone('tr-TR').withMessage('Phone number is required')
+  body('phone').isMobilePhone('any').withMessage('Phone number is required')
 ]
 class AuthService implements IAuthService {
   login: RequestHandler = async (req, res) => {

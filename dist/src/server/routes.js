@@ -21,6 +21,7 @@ const controller_3 = require("../auth/controller");
 const createRoutes = () => __awaiter(void 0, void 0, void 0, function* () {
     const router = express_1.default.Router();
     router.post('/login', controller_1.authService.login);
+    router.post('/logout', middleware_1.authenticateMiddleware, controller_1.authService.logout);
     router.post('/register', controller_3.registerValidation, controller_1.authService.register);
     router.post('/forgot-password', controller_1.authService.forgotPassword);
     router.post('/reset-password', controller_1.authService.resetPassword);

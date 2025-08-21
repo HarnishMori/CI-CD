@@ -20,13 +20,14 @@ const model_1 = require("./model");
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const mongodb_1 = require("mongodb");
 const express_validator_1 = require("express-validator");
+const middleware_1 = require("./middleware");
 dotenv_1.default.config();
 const secretKey = process.env.SECRET_KEY;
 exports.registerValidation = [
     (0, express_validator_1.body)('username').notEmpty().withMessage('Username is required'),
     (0, express_validator_1.body)('email').isEmail().withMessage('Email is required'),
     (0, express_validator_1.body)('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-    (0, express_validator_1.body)('phone').isMobilePhone('tr-TR').withMessage('Phone number is required')
+    (0, express_validator_1.body)('phone').isMobilePhone('any').withMessage('Phone number is required')
 ];
 class AuthService {
     constructor() {
@@ -42,6 +43,7 @@ class AuthService {
                     return res.status(401).json({ message: 'Wrong password' });
                 }
                 const token = jsonwebtoken_1.default.sign({ userId: user._id }, secretKey, { expiresIn: '1h' });
+                yield model_1.Session.findOneAndUpdate({ userId: user._id }, { token }, { upsert: true });
                 res.json({ token, user });
             }
             catch (error) {
@@ -113,10 +115,25 @@ class AuthService {
                 user.password = yield bcrypt_1.default.hash(newPassword, 10);
                 yield user.save();
                 yield passwordReset.deleteOne();
+                yield model_1.Session.deleteOne({ userId: user._id });
                 return res.json({ message: 'Password reset successful' });
             }
             catch (error) {
                 console.error('Error resetting password:', error);
+                return res.status(500).json({ message: 'Something went wrong', error });
+            }
+        });
+        this.logout = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const userId = (0, middleware_1.getUserId)(req);
+                if (!userId) {
+                    return res.status(401).json({ message: 'User not identified' });
+                }
+                yield model_1.Session.deleteOne({ userId });
+                res.json({ message: 'Logout successful' });
+            }
+            catch (error) {
+                console.error('Error logging out:', error);
                 return res.status(500).json({ message: 'Something went wrong', error });
             }
         });
